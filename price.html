@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Прайс-лист Kurme — веревки и канаты</title>
+<style>
+:root{--bg:#faf6ef;--sf:#fff;--tx:#2b2118;--mu:#6f6254;--ac:#a8641f;--at:#fff;--ln:#e5dccd;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#17120d;--sf:#211a13;--tx:#f1e8da;--mu:#b3a592;--ac:#e0954a;--at:#1a1208;--ln:#3a2f23;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:820px;margin:0 auto;padding:20px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.logo{font:800 26px system-ui;color:var(--ac);letter-spacing:1px;text-decoration:none}
+h1{font-size:26px;margin:14px 0 4px}.mu{color:var(--mu);font-size:14px;margin:0}
+.btn{display:inline-block;background:var(--ac);color:var(--at);padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;border:1.5px solid var(--ac);cursor:pointer;font:600 15px system-ui;margin:2px 4px 2px 0}
+.btn.g{background:transparent;color:var(--ac)}
+h2{font-size:19px;margin:28px 0 8px}
+.tw{overflow-x:auto;background:var(--sf);border:1px solid var(--ln);border-radius:12px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--ln)}
+th{font-size:13px;color:var(--mu);font-weight:600}tr:last-child td{border-bottom:0}
+td.p{font-weight:700;white-space:nowrap;color:var(--ac)}td a{color:var(--ac);text-decoration:none;font-weight:600;white-space:nowrap}
+.note{margin-top:22px;color:var(--mu);font-size:14px}
+@media print{body{background:#fff;color:#000}.noprint{display:none}.tw{border:1px solid #bbb}td.p{color:#000}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div><a class="logo" href="../index.html">KURME</a><h1>Прайс-лист</h1><p class="mu" id="upd"></p></div>
+<div class="noprint"><a class="btn g" href="../index.html">← На сайт</a><button class="btn" onclick="window.print()">Распечатать / сохранить в PDF</button></div></div>
+<div id="list"><p class="mu">Загрузка…</p></div>
+<p class="note" id="ct"></p>
+<p class="note">Цены указаны ориентировочно и могут меняться. Точную стоимость и наличие уточняйте в WhatsApp.</p>
+</div>
+<script>
+var CAT={pp:'Полипропиленовые веревки',hemp:'Пеньковые канаты и веревки'};
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML}
+fetch('products.json?'+Date.now()).then(function(r){return r.json()}).then(function(S){
+ var d=(S.ct.phone||'').replace(/\D/g,''),wa=function(t){return 'https://wa.me/'+d+'?text='+encodeURIComponent(t)};
+ if(S.updated)document.getElementById('upd').textContent='Актуально на '+S.updated;
+ document.getElementById('list').innerHTML=Object.keys(CAT).map(function(k){
+  var it=S.items.filter(function(p){return p.c==k});if(!it.length)return '';
+  return '<h2>'+CAT[k]+'</h2><div class="tw"><table><tr><th>Наименование</th><th>Цена</th><th class="noprint"></th></tr>'+it.map(function(p){
+   return '<tr><td>'+esc(p.n)+'</td><td class="p">'+(p.p?esc(p.p):'по запросу')+'</td><td class="noprint"><a target="_blank" rel="noopener" href="'+wa('Здравствуйте, я с вашего сайта Kurme (прайс-лист). Интересует: '+p.n+'. Подскажите, пожалуйста, цену и наличие.')+'">Заказать</a></td></tr>'}).join('')+'</table></div>'}).join('');
+ document.getElementById('ct').innerHTML='Контакты: '+esc(S.ct.phone||'')+(S.ct.email?' · '+esc(S.ct.email):'')+(S.ct.addr?' · '+esc(S.ct.addr):'');
+}).catch(function(){document.getElementById('list').innerHTML='<p>Не удалось загрузить прайс. Откройте страницу по ссылке с GitHub Pages.</p>'});
+</script>
+</body>
+</html>

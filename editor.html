@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kurme — редактор товаров</title>
+<style>
+body{font:15px/1.5 system-ui,sans-serif;max-width:900px;margin:0 auto;padding:16px;background:#faf6ef;color:#2b2118}
+h1{font-size:24px}h3{margin:22px 0 6px}
+.row{background:#fff;border:1px solid #e5dccd;border-radius:10px;padding:12px;margin:10px 0}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:8px}
+label{font-size:12px;color:#6f6254;display:block}
+input,select,textarea{width:100%;padding:8px;border:1px solid #d8cdb9;border-radius:6px;font:inherit;background:#fff;color:inherit}
+button,.b{background:#a8641f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font:600 15px system-ui;cursor:pointer;margin:3px 4px 3px 0;display:inline-block}
+.g{background:transparent;color:#a8641f;border:1.5px solid #a8641f}
+.note{background:#fff3d6;border-radius:8px;padding:10px;margin:10px 0}
+</style>
+</head>
+<body>
+<h1>Редактор товаров Kurme</h1>
+<div class="note">Меняйте данные ниже, затем нажмите «Скачать products.json» и загрузите этот файл в свой репозиторий на GitHub вместо старого. Фото кладите в папку <b>data</b> (рядом с products.json) и указывайте имена файлов в поле «Фото». Дата в прайс-листе обновляется сама при скачивании.</div>
+<label class="b g">Открыть products.json<input type="file" id="open" accept=".json" hidden></label>
+<button id="dl">Скачать products.json</button><button class="g" id="add">+ Товар</button>
+<div id="root"></div>
+<script>
+var S=null,CAT={pp:'Полипропиленовые веревки',hemp:'Пеньковые канаты'},$=function(i){return document.getElementById(i)};
+function esc(s){var d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML.replace(/"/g,'&quot;')}
+function R(){if(!S){$('root').innerHTML='<p>Выберите файл products.json кнопкой «Открыть».</p>';return}
+ var h='<h3>Контакты</h3><div class="f"><div><label>Телефон для WhatsApp, только цифры с кодом страны (77011234567)</label><input data-ct="phone" value="'+esc(S.ct.phone)+'"></div><div><label>Email</label><input data-ct="email" value="'+esc(S.ct.email)+'"></div><div><label>Адрес</label><input data-ct="addr" value="'+esc(S.ct.addr)+'"></div></div><h3>Цвета</h3>';
+ h+=S.colors.map(function(c,i){return '<div class="f" style="grid-template-columns:2fr 1fr auto"><input data-col="'+i+'" data-k="n" value="'+esc(c.n)+'"><input type="color" data-col="'+i+'" data-k="h" value="'+esc(c.h)+'"><button class="g" data-a="dc" data-i="'+i+'">✕</button></div>'}).join('')+'<button class="g" data-a="ac">+ Цвет</button><h3>Товары ('+S.items.length+')</h3>';
+ h+=S.items.map(function(p,i){return '<div class="row"><div class="f"><div><label>Название</label><input data-i="'+i+'" data-k="n" value="'+esc(p.n)+'"></div><div><label>Категория</label><select data-i="'+i+'" data-k="c">'+Object.keys(CAT).map(function(k){return '<option value="'+k+'"'+(p.c==k?' selected':'')+'>'+CAT[k]+'</option>'}).join('')+'</select></div><div><label>Цена (напр. 1200 ₸/м)</label><input data-i="'+i+'" data-k="p" value="'+esc(p.p)+'"></div><div style="grid-column:1/-1"><label>Фото: пути через запятую, первое показывается первым (например pp6-1.jpg, pp6-2.jpg)</label><input data-i="'+i+'" data-k="imgs" value="'+esc((p.imgs||[]).join(', '))+'"></div></div><label>Описание</label><textarea rows="2" data-i="'+i+'" data-k="d">'+esc(p.d)+'</textarea><button class="g" data-a="del" data-i="'+i+'">Удалить товар</button></div>'}).join('');
+ $('root').innerHTML=h}
+function load(d){S=d;S.ct=S.ct||{};S.colors=S.colors||[];S.items=S.items||[];R()}
+fetch('products.json').then(function(r){return r.json()}).then(load).catch(function(){R()});
+$('open').onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{load(JSON.parse(r.result))}catch(x){alert('Файл не читается')}};r.readAsText(f)};
+$('add').onclick=function(){if(!S)return;S.items.unshift({c:'pp',n:'Новый товар',p:'',d:'',imgs:[]});R()};
+$('dl').onclick=function(){if(!S)return;S.updated=new Date().toLocaleDateString('ru-RU');var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='products.json';a.click()};
+document.addEventListener('click',function(e){var a=e.target.dataset.a,i=+e.target.dataset.i;if(!a)return;
+ if(a=='del'&&confirm('Удалить товар?'))S.items.splice(i,1);
+ if(a=='ac')S.colors.push({n:'Новый цвет',h:'#888888'});
+ if(a=='dc')S.colors.splice(i,1);R()});
+document.addEventListener('input',function(e){var d=e.target.dataset,v=e.target.value;
+ if(d.ct)S.ct[d.ct]=v;else if(d.col!=null)S.colors[d.col][d.k]=v;else if(d.i!=null&&d.k)S.items[d.i][d.k]=(d.k=='imgs'?v.split(',').map(function(x){return x.trim()}).filter(Boolean):v)});
+</script>
+</body>
+</html>
